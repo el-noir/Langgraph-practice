@@ -9,44 +9,34 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.tools import tool
 import asyncio
 import os
+from langchain_mcp_adapters.client import MultiServerMCPClient
 
 load_dotenv()
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("GOOGLE_API_KEY")
 )
 
-@tool 
-def calculator(first_num: float, second_num: float, operation: str) -> dict:
-    """
-    Perform a basic arithmetic operation on two numbers.
-    Supported operations: add, sub, mul, div
-    """
-    try:
-        if operation == "add":
-            result = first_num + second_num
-        elif operation == "sub":
-            result = first_num - second_num
-        elif operation == "mul":
-            result = first_num * second_num
-        elif operation == "div":
-            if second_num == 0:
-                return {"error": "Division by zero is not allowed"}
-            result = first_num / second_num
-        else:
-            return {"error": f"Unsupported operation '{operation}'"}
-        
-        return {"first_num": first_num, "second_num": second_num, "operation": operation, "result": result}
-    except Exception as e:
-        return {"error": str(e)}
-    
-tools = [calculator]
+client = MultiServerMCPClient(
+    {
+        "arithmatic-tool": {
+            "transport": "stdio",
+            "command": "python",
+            "args": ["D:\AI\Langgraph\Langgraph-Learning\learning2\mcp-client\server.py"]
+        } 
+    }
+)
 
-llm_with_tools = llm.bind_tools(tools)
 
 class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
-def build_graph():
+async def build_graph():
+
+    tools = await client.get_tools()
+    print(tools)
+
+    llm_with_tools = llm.bind_tools(tools)
+
     async def chat_node(state: ChatState):
         messages = state["messages"]
         response = await llm_with_tools.ainvoke(messages)
