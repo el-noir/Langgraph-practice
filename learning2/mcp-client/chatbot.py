@@ -18,14 +18,13 @@ llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash",google_api_key=os.getenv("
 
 client = MultiServerMCPClient(
     {
-        "arithmatic-tool": {
+        "arithmetic-tool": {
             "transport": "stdio",
             "command": "python",
-            "args": ["D:\AI\Langgraph\Langgraph-Learning\learning2\mcp-client\server.py"]
+            "args": [r"D:\AI\Langgraph\Langgraph-Learning\learning2\mcp-client\server.py"]
         } 
     }
 )
-
 
 class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
@@ -59,7 +58,7 @@ async def build_graph():
     return chatbot
 
 async def main():
-    chatbot = build_graph()
+    chatbot = await build_graph()
 
     result = await chatbot.ainvoke({"messages": [HumanMessage(content="What is 15 multiplied by 3 and give answer like a philosopher")]})
 
